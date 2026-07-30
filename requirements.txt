@@ -7,4 +7,4 @@ pandas>=2,<3
 prometheus-client>=0.20,<1
 python-dotenv>=1,<2
 PyYAML>=6,<7
-websockets>=11,<16
+websockets>=17.0,<18
