@@ -1,5 +1,5 @@
 aiohttp>=3.9,<4
-clickhouse-connect>=0.8,<1
+clickhouse-connect>=1.6.0,<2
 kafka-python>=2.0.2,<3
 numpy>=1.26,<3
 orjson>=3.9,<4
