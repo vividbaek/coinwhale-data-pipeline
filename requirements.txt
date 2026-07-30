@@ -3,7 +3,7 @@ clickhouse-connect==0.15.1
 kafka-python==2.3.2
 numpy==2.2.6
 orjson==3.11.9
-pandas==2.3.3
+pandas==3.0.5
 prometheus-client==0.26.0
 python-dotenv==1.2.2
 PyYAML==6.0.3
