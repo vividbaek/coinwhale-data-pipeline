@@ -54,6 +54,9 @@ Before every public push:
 6. Run the workspace Git identity guard for the target repository.
 7. Confirm README claims still match code and same-revision command output.
 
+Runtime and test dependencies are exact pins. Dependabot updates should change
+those pins deliberately; do not merge a minimum-version-only range rewrite.
+
 ## License boundary
 
 The repository is publicly visible, but no reuse license has been selected.
