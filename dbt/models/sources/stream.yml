@@ -1,0 +1,34 @@
+version: 2
+
+sources:
+  - name: stream
+    description: Spark Structured Streaming outputs in ClickHouse.
+    schema: stream
+    tables:
+      - name: cvd
+        loaded_at_field: ts
+        freshness:
+          warn_after: {count: 2, period: minute}
+          error_after: {count: 10, period: minute}
+        columns:
+          - name: ts
+            tests: [not_null]
+          - name: symbol
+            tests: [not_null]
+      - name: liquidation
+        loaded_at_field: ts
+      - name: price
+        loaded_at_field: ts
+        columns:
+          - name: ts
+            tests: [not_null]
+          - name: symbol
+            tests: [not_null]
+      - name: oi
+        loaded_at_field: ts
+      - name: market_metrics
+        loaded_at_field: ts
+      - name: funding
+        loaded_at_field: ts
+      - name: ls_ratio
+        loaded_at_field: ts

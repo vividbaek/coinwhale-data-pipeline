@@ -1,0 +1,38 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  contracts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: python -m pip install --upgrade pip -r requirements-dev.txt
+      - run: make test
+      - run: make compile
+      - run: docker compose --env-file .env.example config --quiet
+
+  dbt-parse:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements-dbt.txt
+      - run: python -m pip install --upgrade pip -r requirements-dbt.txt
+      - run: cp dbt/profiles.yml.example dbt/profiles.yml
+      - run: dbt parse --project-dir dbt --profiles-dir dbt
+        env:
+          CLICKHOUSE_DBT_PASSWORD: ci-not-a-secret

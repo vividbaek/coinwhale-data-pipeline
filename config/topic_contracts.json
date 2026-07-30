@@ -1,0 +1,65 @@
+{
+  "contracts": {
+    "binance-trade": {
+      "schema_version": 1,
+      "event_time_fields": ["T", "E"],
+      "require_event_time": true,
+      "required_fields": {
+        "p": "number",
+        "q": "number"
+      },
+      "optional_fields": {
+        "a": "integer",
+        "t": "integer",
+        "trade_id": "integer",
+        "agg_trade_id": "integer"
+      },
+      "quality_rules": ["positive_price:p", "positive_quantity:q"]
+    },
+    "spot-trade": {
+      "extends": "binance-trade",
+      "schema_version": 1
+    },
+    "binance-bookticker": {
+      "schema_version": 1,
+      "event_time_fields": ["E", "T", "event_time", "eventTime", "timestamp", "ts"],
+      "required_fields": {
+        "b": "number",
+        "a": "number"
+      },
+      "optional_fields": {
+        "B": "number",
+        "A": "number"
+      },
+      "quality_rules": ["positive_price:b", "positive_price:a", "bid_lte_ask:b:a"]
+    },
+    "spot-bookticker": {
+      "extends": "binance-bookticker",
+      "schema_version": 1
+    },
+    "binance-markprice": {
+      "schema_version": 1,
+      "event_time_fields": ["E", "T", "time", "timestamp", "ts", "nextFundingTime"],
+      "required_fields": {
+        "p": "number"
+      },
+      "optional_fields": {
+        "r": "number"
+      },
+      "quality_rules": ["positive_price:p"]
+    },
+    "binance-openinterest": {
+      "schema_version": 1,
+      "event_time_fields": ["E", "T", "time", "timestamp", "ts"],
+      "require_event_time": false,
+      "required_any": [
+        ["openInterest", "open_interest"]
+      ],
+      "field_types": {
+        "openInterest": "number",
+        "open_interest": "number"
+      },
+      "quality_rules": ["non_negative_any:openInterest:open_interest"]
+    }
+  }
+}

@@ -1,0 +1,72 @@
+symbols:
+  binance:
+    futures:
+      quote_currency: USDT
+      collect:
+        - BTCUSDT
+        - ETHUSDT
+        - SOLUSDT
+        - DOGEUSDT
+        - TRXUSDT
+        - XRPUSDT
+      trade:
+        - BTCUSDT
+        - ETHUSDT
+        - SOLUSDT
+      backtest:
+        - BTCUSDT
+        - ETHUSDT
+        - SOLUSDT
+    spot:
+      quote_currency: USDT
+      collect:
+        - BTCUSDT
+        - ETHUSDT
+        - SOLUSDT
+        - DOGEUSDT
+        - TRXUSDT
+        - XRPUSDT
+
+core_symbols:
+  - BTCUSDT
+  - ETHUSDT
+  - SOLUSDT
+
+display_symbols:
+  - BTCUSDT
+  - ETHUSDT
+  - SOLUSDT
+  - DOGEUSDT
+  - TRXUSDT
+
+symbol_metadata:
+  BTCUSDT:
+    base_currency: BTC
+    quote_currency: USDT
+    exchange: binance
+    market: futures
+  ETHUSDT:
+    base_currency: ETH
+    quote_currency: USDT
+    exchange: binance
+    market: futures
+  SOLUSDT:
+    base_currency: SOL
+    quote_currency: USDT
+    exchange: binance
+    market: futures
+  DOGEUSDT:
+    base_currency: DOGE
+    quote_currency: USDT
+    exchange: binance
+    market: futures
+  TRXUSDT:
+    base_currency: TRX
+    quote_currency: USDT
+    exchange: binance
+    market: futures
+  XRPUSDT:
+    base_currency: XRP
+    quote_currency: USDT
+    exchange: binance
+    market: futures

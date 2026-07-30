@@ -1,0 +1,14 @@
+[project]
+name = "coinwhale-data-pipeline"
+version = "0.1.0"
+description = "Reference WebSocket-to-Kafka-to-Spark-to-ClickHouse data pipeline."
+requires-python = ">=3.12"
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+extend-exclude = ["data", "dbt/target", "spark_jobs/checkpoints"]

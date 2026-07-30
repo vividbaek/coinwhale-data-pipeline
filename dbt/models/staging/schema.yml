@@ -1,0 +1,87 @@
+version: 2
+
+models:
+  - name: stg_stream_price
+    description: Stream price rows with normalized data quality flags.
+    columns:
+      - name: ts
+        tests:
+          - not_null
+      - name: symbol
+        tests:
+          - not_null
+      - name: has_negative_price
+        tests:
+          - accepted_values:
+              arguments:
+                values: [0, 1]
+      - name: has_crossed_futures_book
+        tests:
+          - accepted_values:
+              arguments:
+                values: [0, 1]
+      - name: has_crossed_spot_book
+        tests:
+          - accepted_values:
+              arguments:
+                values: [0, 1]
+
+  - name: stg_stream_cvd
+    description: Stream CVD rows with negative-volume and count checks.
+    columns:
+      - name: ts
+        tests:
+          - not_null
+      - name: symbol
+        tests:
+          - not_null
+      - name: has_negative_volume
+        tests:
+          - accepted_values:
+              arguments:
+                values: [0, 1]
+
+  - name: stg_stream_oi
+    description: Stream open-interest rows with non-negative checks.
+    columns:
+      - name: minute
+        tests:
+          - not_null
+      - name: symbol
+        tests:
+          - not_null
+      - name: has_negative_open_interest
+        tests:
+          - accepted_values:
+              arguments:
+                values: [0, 1]
+
+  - name: stg_stream_funding
+    description: Stream funding rows with price, rate, and timestamp checks.
+    columns:
+      - name: ts
+        tests:
+          - not_null
+      - name: symbol
+        tests:
+          - not_null
+      - name: has_extreme_funding_rate
+        tests:
+          - accepted_values:
+              arguments:
+                values: [0, 1]
+
+  - name: stg_stream_market_metrics
+    description: Stream market metrics rows with range and non-negative checks.
+    columns:
+      - name: ts
+        tests:
+          - not_null
+      - name: symbol
+        tests:
+          - not_null
+      - name: has_invalid_24h_range
+        tests:
+          - accepted_values:
+              arguments:
+                values: [0, 1]

@@ -1,0 +1,10 @@
+.git
+.github
+.venv*
+.env
+data
+logs
+**/__pycache__
+dbt/target
+dbt/logs
+spark_jobs/checkpoints
