@@ -16,7 +16,7 @@ spark_jobs/dlq/
 dbt/target/
 dbt/logs/
 dbt/dbt_packages/
-dbt/profiles.yml
+dbt/.user.yml
 
 *.parquet
 *.csv

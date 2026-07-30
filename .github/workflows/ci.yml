@@ -32,7 +32,6 @@ jobs:
           cache: pip
           cache-dependency-path: requirements-dbt.txt
       - run: python -m pip install --upgrade pip -r requirements-dbt.txt
-      - run: cp dbt/profiles.yml.example dbt/profiles.yml
       - run: dbt parse --project-dir dbt --profiles-dir dbt
         env:
           CLICKHOUSE_DBT_PASSWORD: ci-not-a-secret
