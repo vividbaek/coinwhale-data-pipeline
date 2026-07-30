@@ -1,6 +1,6 @@
 aiohttp==3.14.3
 clickhouse-connect==0.15.1
-kafka-python==2.3.2
+kafka-python==3.0.9
 numpy==2.2.6
 orjson==3.11.9
 pandas==2.3.3
