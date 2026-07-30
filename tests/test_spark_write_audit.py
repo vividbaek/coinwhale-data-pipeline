@@ -104,7 +104,11 @@ class SparkWriteAuditTests(unittest.TestCase):
         self.ch_writer.clickhouse_connect.get_client.side_effect = [first, second]
 
         self.assertIs(self.ch_writer.get_client(), first)
-        self.ch_writer._client_last_healthcheck = 0.0
+        self.ch_writer._client_last_healthcheck = (
+            self.ch_writer.time.monotonic()
+            - self.ch_writer.CH_CLIENT_PING_INTERVAL_SEC
+            - 1
+        )
         self.assertIs(self.ch_writer.get_client(), second)
 
         first.close.assert_called_once()
