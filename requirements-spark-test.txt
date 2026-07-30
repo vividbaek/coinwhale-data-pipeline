@@ -1,2 +1,2 @@
 -r requirements-dev.txt
-pyspark==3.5.8
+pyspark==4.2.0
