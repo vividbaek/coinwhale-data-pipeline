@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-broker="${KAFKA_BOOTSTRAP_SERVERS:-kafka-1:29092}"
+# This command runs inside the Kafka container, so it must use the internal
+# listener even when host collectors use localhost:${KAFKA_HOST_PORT:-9092}.
+broker="${KAFKA_INTERNAL_BOOTSTRAP_SERVERS:-kafka-1:29092}"
 partitions="${KAFKA_PARTITIONS:-3}"
 hot_partitions="${KAFKA_HOT_TOPIC_PARTITIONS:-6}"
 

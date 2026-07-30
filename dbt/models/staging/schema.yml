@@ -44,7 +44,7 @@ models:
   - name: stg_stream_oi
     description: Stream open-interest rows with non-negative checks.
     columns:
-      - name: minute
+      - name: ts
         tests:
           - not_null
       - name: symbol

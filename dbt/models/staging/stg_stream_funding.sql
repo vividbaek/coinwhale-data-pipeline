@@ -3,11 +3,10 @@ SELECT
     symbol,
     mark_price,
     index_price,
-    estimated_settle_price,
     funding_rate,
     next_funding_time,
-    premium_index,
-    (mark_price < 0 OR index_price < 0 OR estimated_settle_price < 0) AS has_negative_price,
+    mark_premium_pct,
+    (mark_price < 0 OR index_price < 0) AS has_negative_price,
     abs(funding_rate) > 0.01 AS has_extreme_funding_rate,
     next_funding_time < ts AS has_stale_next_funding_time
 FROM {{ source('stream', 'funding') }}

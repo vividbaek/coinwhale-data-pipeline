@@ -1,15 +1,13 @@
--- database/clickhouse_schema.sql
--- 메달리온(Medallion) 아키텍처 기반 ClickHouse 스키마
+-- Public demo schema for the CoinWhale data pipeline.
 --
 -- stream : Spark Structured Streaming → ClickHouse (5초 집계, PARTITION BY 월, TTL 90일)
--- hist   : Binance Vision 과거 데이터 (백테스팅 전용, PARTITION BY 월, 영구 보관)
--- gold   : Silver JOIN VIEW + 시그널 + Paper Trading
+-- hist   : 과거 데이터 적재 예시 (PARTITION BY 월, TTL 없음)
+-- gold   : dbt가 소유하는 분석 view namespace
 
 
 -- ============================================================
--- 기존 DB 정리
+-- Database namespaces
 -- ============================================================
-DROP DATABASE IF EXISTS boaz;
 CREATE DATABASE IF NOT EXISTS stream;
 CREATE DATABASE IF NOT EXISTS hist;
 CREATE DATABASE IF NOT EXISTS gold;
@@ -165,8 +163,44 @@ TTL ts + INTERVAL 90 DAY;
 
 
 -- ============================================================
--- [HIST] 백테스팅 전용 테이블 (Binance Vision 과거 데이터)
--- TTL 없음, 월별 파티션으로 쿼리 성능 확보
+-- [STREAM DQ] Spark micro-batch data-quality summaries
+-- Invalid row samples are bounded operational evidence. Do not
+-- export or commit them as source data.
+-- ============================================================
+CREATE TABLE IF NOT EXISTS stream.pipeline_quality_events
+(
+    event_date Date DEFAULT toDate(event_time),
+    event_time DateTime64(3, 'UTC') DEFAULT now64(3),
+    pipeline LowCardinality(String),
+    stage LowCardinality(String),
+    topic LowCardinality(String),
+    symbol LowCardinality(String),
+    checkpoint String,
+    batch_id UInt64,
+    schema_version UInt16 DEFAULT 1,
+    input_rows UInt64,
+    parsed_rows UInt64,
+    dropped_rows UInt64,
+    null_critical_count UInt64,
+    parse_error_count UInt64,
+    event_lag_p95_ms UInt64,
+    event_lag_p99_ms UInt64,
+    write_rows UInt64,
+    checksum String,
+    error_type LowCardinality(String),
+    sample_payload String,
+    created_at DateTime64(3, 'UTC') DEFAULT now64(3)
+)
+ENGINE = ReplacingMergeTree(created_at)
+PARTITION BY toYYYYMM(event_date)
+ORDER BY (pipeline, stage, topic, symbol, checkpoint, batch_id, event_time)
+TTL event_date + INTERVAL 90 DAY;
+
+
+-- ============================================================
+-- [HIST] Optional historical-table examples
+-- This public demo does not ship a historical loader. These tables
+-- document the compatible target shape for a future replay/backfill.
 -- ============================================================
 CREATE TABLE IF NOT EXISTS hist.cvd (
     ts                     DateTime,

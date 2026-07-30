@@ -304,9 +304,14 @@ def apply_quality_gate(
         (lag_bad, "event_time_lag"),
     ]
 
-    error_expr = F.col("_parse_error")
+    original_parse_error = F.col("_parse_error")
+    error_expr = original_parse_error
     for condition, reason in reversed(invalid_reasons):
-        reason_expr = F.lit(reason) if reason is not None else F.coalesce(error_expr, F.lit("parse_error"))
+        reason_expr = (
+            F.lit(reason)
+            if reason is not None
+            else F.coalesce(original_parse_error, F.lit("parse_error"))
+        )
         error_expr = F.when(condition, reason_expr).otherwise(error_expr)
 
     is_valid = _and_all([~condition for condition, _reason in invalid_reasons])

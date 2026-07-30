@@ -139,24 +139,28 @@ def create_spark_session(app_name="BinanceProcessor"):
     appname은 토픽임
     spark.jars.pacages: 카프카 전용 라이브러리 불러옴
     checkpointLocation: 스트리밍 중 에러 났을 때, 기록하는 것
-    log4j.properties: 필요한 로그만 보려고 정리함.
+    log4j2.properties: 필요한 로그만 보려고 정리함.
     """
-    shuffle_partitions = os.getenv("SPARK_SQL_SHUFFLE_PARTITIONS", "24")
+    shuffle_partitions = os.getenv("SPARK_SQL_SHUFFLE_PARTITIONS", "8")
+    spark_version = os.getenv("SPARK_VERSION", "3.5.8")
 
     return (
         SparkSession.builder.appName(app_name)
-        .config("spark.jars.packages", "org.apache.spark:spark-sql-kafka-0-10_2.12:3.3.1")
+        .config(
+            "spark.jars.packages",
+            f"org.apache.spark:spark-sql-kafka-0-10_2.12:{spark_version}",
+        )
         .config(
             "spark.sql.streaming.checkpointLocation",
             f"/opt/spark/work-dir/checkpoints/{app_name}",
         )
         .config(
             "spark.driver.extraJavaOptions",
-            "-Dlog4j.configuration=file:/opt/spark/work-dir/log4j.properties",
+            "-Dlog4j.configurationFile=file:/opt/spark/work-dir/log4j2.properties",
         )
         .config(
             "spark.executor.extraJavaOptions",
-            "-Dlog4j.configuration=file:/opt/spark/work-dir/log4j.properties",
+            "-Dlog4j.configurationFile=file:/opt/spark/work-dir/log4j2.properties",
         )
         .config("spark.sql.shuffle.partitions", shuffle_partitions)
         .config("spark.streaming.stopGracefullyOnShutdown", "true")

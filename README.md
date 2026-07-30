@@ -17,6 +17,8 @@ Spark Structured Streaming
           v
  ClickHouse stream.* tables
           |
+          +----> DQ summaries / quarantine
+          |
           v
    dbt Gold market marts
 
@@ -27,6 +29,9 @@ Prometheus: collector and Kafka metrics
 이 저장소는 CoinWhale 운영 코드에서 데이터 엔지니어링 학습에 필요한 부분만
 분리한 공개용 프로젝트입니다. 에이전트, RAG, 자동매매, 백테스트, 모델 artifact,
 내부 운영 보고서는 포함하지 않습니다.
+
+공개 허용 범위와 제외 항목은
+[docs/PUBLIC_SCOPE.md](docs/PUBLIC_SCOPE.md)에 명시되어 있습니다.
 
 ```bash
 git clone https://github.com/vividbaek/coinwhale-data-pipeline.git
@@ -45,6 +50,18 @@ cd coinwhale-data-pipeline
 | Orchestration | `airflow/dags/` | minimal dbt freshness/build DAG |
 | Observability | `infra/prometheus.yml` | Kafka lag and collector metrics |
 | Verification | `tests/` | dependency-light contracts and Spark writer behavior |
+| Local runtime | `docker-compose.yml`, `docker/` | isolated Kafka, Spark, ClickHouse, Prometheus stack |
+
+## Documentation
+
+- [Architecture](docs/ARCHITECTURE.md): envelope, delivery semantics, DQ, and
+  local-versus-production boundaries
+- [Local runbook](docs/RUNBOOK.md): clean start, stage-by-stage diagnosis, port
+  isolation, and reset procedure
+- [Public scope](docs/PUBLIC_SCOPE.md): allowlisted content, excluded private
+  material, claims policy, and release gate
+- [Contributing](CONTRIBUTING.md): validation required for changes
+- [Security](SECURITY.md): private vulnerability reporting
 
 ## Suggested reading order
 
@@ -76,7 +93,8 @@ live in `config/topic_contracts.json`.
 
 - Docker Compose v2
 - Python 3.12
-- approximately 6 GB of free memory for the demo stack
+- approximately 8 GB of available memory for a comfortable local run
+- outbound access to Binance, Docker Hub, PyPI, and Maven Central
 
 ### 1. Configure
 
@@ -86,6 +104,8 @@ cp .env.example .env
 
 Replace both `CHANGE_ME` values in `.env` with the same local-only password; the demo
 uses the same ClickHouse account for Spark and dbt. Do not commit real credentials.
+If the default ports are already occupied, use the port-isolation example in
+[docs/RUNBOOK.md](docs/RUNBOOK.md).
 
 ```bash
 docker compose config --quiet
@@ -93,10 +113,11 @@ docker compose config --quiet
 
 ### 2. Start the infrastructure
 
-Start Kafka, ClickHouse, Spark, Kafka Exporter, and Prometheus:
+Build the pinned Spark runtime and start Kafka, ClickHouse, Spark, Kafka
+Exporter, and Prometheus:
 
 ```bash
-docker compose up -d
+docker compose up -d --build
 ./scripts/create_topics.sh
 ```
 
@@ -109,7 +130,7 @@ docker compose exec -T kafka-1 \
 curl --fail --silent --show-error http://localhost:8123/ping
 ```
 
-ClickHouse automatically initializes `stream.*`, `hist.*`, and pipeline-audit tables
+ClickHouse automatically initializes `stream.*`, `hist.*`, and the quality-audit table
 from `database/init.sql`.
 
 ### 3. Start ingestion
@@ -130,15 +151,13 @@ this terminal open.
 Open another terminal in the repository root:
 
 ```bash
-set -a
-source .env
-set +a
 ./scripts/run_spark.sh
 ```
 
-The helper installs Python runtime dependencies on both Spark containers, then submits
-the Silver application. The first run may take a few minutes while Spark resolves the
-Kafka connector packages.
+The Spark image already contains the Python sink dependencies. The helper loads
+`.env`, applies the local resource limits, and submits the Silver application.
+The first run may take a few minutes while Spark resolves the matching Kafka
+connector package.
 
 ### 5. Verify the data flow
 
@@ -173,6 +192,12 @@ curl --fail --silent --show-error \
 
 `total_rows` should begin increasing after both the collectors and Spark application
 are running.
+
+Run the combined readiness check:
+
+```bash
+./scripts/check_pipeline.sh
+```
 
 Useful endpoints:
 
@@ -215,8 +240,12 @@ source .env
 set +a
 
 dbt source freshness --project-dir dbt --profiles-dir dbt
-dbt build --project-dir dbt --profiles-dir dbt --select tag:gold_core
+dbt build --project-dir dbt --profiles-dir dbt
 ```
+
+`dbt build` validates every public staging model and mart against the running
+ClickHouse schema. Source freshness is expected to fail when ingestion is
+stopped or the tables are empty.
 
 ## Airflow example
 
@@ -234,6 +263,14 @@ make test
 make compile
 ```
 
+Spark expression tests use the same PySpark minor version as the Docker
+runtime:
+
+```bash
+python -m pip install -r requirements-spark-test.txt
+make test-spark
+```
+
 Configuration checks:
 
 ```bash
@@ -241,18 +278,21 @@ make compose-check
 make dbt-parse
 ```
 
-CI repeats the contract tests, Python compilation, Compose validation, dbt parsing,
-and secret scanning.
+CI repeats the contract tests, Python compilation, Compose validation, PySpark
+quality tests, an isolated ClickHouse `dbt build`, and complete-history secret
+scanning.
 
 ## Troubleshooting
 
 - `docker compose config` reports a missing variable: recreate `.env` from
   `.env.example` and replace every `CHANGE_ME`.
 - A port is already allocated: stop the conflicting local service or change the
-  published host port in `docker-compose.yml`.
+  corresponding `*_PORT` value in `.env`.
 - Kafka has data but ClickHouse does not: confirm the application is visible in the
   Spark UI, then run
   `docker compose logs --tail=100 spark-master spark-worker`.
+- The Spark image build fails: confirm Docker Hub and PyPI are reachable, then
+  rerun `docker compose build --no-cache spark-master`.
 - The Kafka sample command times out: confirm `python -m collectors.run_all` is still
   running and that the host can reach Binance.
 - ClickHouse returns `Authentication failed`: source `.env` in the current shell
@@ -287,6 +327,8 @@ throughput, uptime, data scale, or trading outcome.
 - Binance and other data-provider terms and rate limits still apply.
 - Serialized model files and production data are intentionally excluded.
 - Report vulnerabilities through the process in [SECURITY.md](SECURITY.md).
+- Review the allowlist and release gate in
+  [docs/PUBLIC_SCOPE.md](docs/PUBLIC_SCOPE.md) before adding a new source family.
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for contribution checks.
 

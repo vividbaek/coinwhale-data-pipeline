@@ -19,6 +19,9 @@ sources:
         loaded_at_field: ts
       - name: price
         loaded_at_field: ts
+        freshness:
+          warn_after: {count: 2, period: minute}
+          error_after: {count: 10, period: minute}
         columns:
           - name: ts
             tests: [not_null]
@@ -26,9 +29,21 @@ sources:
             tests: [not_null]
       - name: oi
         loaded_at_field: ts
+        freshness:
+          warn_after: {count: 2, period: minute}
+          error_after: {count: 10, period: minute}
       - name: market_metrics
         loaded_at_field: ts
+        freshness:
+          warn_after: {count: 2, period: minute}
+          error_after: {count: 10, period: minute}
       - name: funding
         loaded_at_field: ts
+        freshness:
+          warn_after: {count: 2, period: minute}
+          error_after: {count: 10, period: minute}
       - name: ls_ratio
         loaded_at_field: ts
+        freshness:
+          warn_after: {count: 10, period: minute}
+          error_after: {count: 30, period: minute}

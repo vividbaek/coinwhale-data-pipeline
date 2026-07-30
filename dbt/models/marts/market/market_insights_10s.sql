@@ -47,7 +47,7 @@ SELECT
 FROM
 (
     SELECT
-        toStartOfInterval(ts, INTERVAL 5 SECOND) AS bucket_ts,
+        toStartOfInterval(ts, INTERVAL 10 SECOND) AS bucket_ts,
         *
     FROM {{ ref('market_insights_5s') }}
 )

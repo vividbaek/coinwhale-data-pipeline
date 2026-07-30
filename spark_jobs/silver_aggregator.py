@@ -1,6 +1,6 @@
 # spark_jobs/silver_aggregator.py
 """
-Silver Layer Aggregator — Kafka 원본 데이터를 10초 윈도우로 집계해 ClickHouse Silver 테이블에 적재.
+Silver Layer Aggregator — Kafka 원본 데이터를 event-time window로 집계해 ClickHouse Silver 테이블에 적재.
 
 새 Silver 테이블 추가 방법:
   1. spark_jobs/silver/ 에 파일 생성 (예: price.py)

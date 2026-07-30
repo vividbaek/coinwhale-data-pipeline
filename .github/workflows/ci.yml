@@ -22,8 +22,27 @@ jobs:
       - run: make compile
       - run: docker compose --env-file .env.example config --quiet
 
-  dbt-parse:
+  spark-quality:
     runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements-spark-test.txt
+      - run: python -m pip install --upgrade pip -r requirements-spark-test.txt
+      - run: make test-spark
+
+  dbt-build:
+    runs-on: ubuntu-latest
+    env:
+      CLICKHOUSE_HOST: localhost
+      CLICKHOUSE_PORT: "8123"
+      CLICKHOUSE_USER: coinwhale
+      CLICKHOUSE_PASSWORD: ci-local-only
+      CLICKHOUSE_DBT_USER: coinwhale
+      CLICKHOUSE_DBT_PASSWORD: ci-local-only
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-python@v7
@@ -33,5 +52,21 @@ jobs:
           cache-dependency-path: requirements-dbt.txt
       - run: python -m pip install --upgrade pip -r requirements-dbt.txt
       - run: dbt parse --project-dir dbt --profiles-dir dbt
-        env:
-          CLICKHOUSE_DBT_PASSWORD: ci-not-a-secret
+      - name: Start isolated ClickHouse
+        run: docker compose up -d clickhouse
+      - name: Wait for ClickHouse
+        shell: bash
+        run: |
+          set -euo pipefail
+          for attempt in {1..30}; do
+            if curl --fail --silent http://localhost:8123/ping >/dev/null; then
+              exit 0
+            fi
+            sleep 2
+          done
+          docker compose logs clickhouse
+          exit 1
+      - run: dbt build --project-dir dbt --profiles-dir dbt
+      - name: Stop isolated ClickHouse
+        if: always()
+        run: docker compose down --volumes
