@@ -7,6 +7,63 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 
+PUBLIC_RUNTIME_PATHS = (
+    "airflow",
+    "collectors",
+    "common",
+    "config",
+    "database",
+    "dbt",
+    "docker",
+    "infra",
+    "scripts",
+    "spark_jobs",
+    "utils",
+)
+
+OUT_OF_SCOPE_PATTERNS = {
+    "AI/news enrichment": re.compile(
+        r"qdrant|ai_enrichment|news_(?:articles|crawl|image)|translation_complete",
+        re.IGNORECASE,
+    ),
+    "paper or automated trading": re.compile(
+        r"paper[_ -]?trad|auto[_ -]?trad|trading_(?:pipeline|decision)|trading orchestrator",
+        re.IGNORECASE,
+    ),
+    "backtesting": re.compile(r"backtest", re.IGNORECASE),
+    "trading symbol configuration": re.compile(
+        r"get_trade_symbols|^[ \t]*trade[ \t]*:",
+        re.IGNORECASE | re.MULTILINE,
+    ),
+}
+
+
+def _public_runtime_files() -> list[Path]:
+    files: list[Path] = []
+    for relative_path in PUBLIC_RUNTIME_PATHS:
+        path = ROOT / relative_path
+        if path.is_file():
+            files.append(path)
+            continue
+        files.extend(
+            candidate
+            for candidate in path.rglob("*")
+            if candidate.is_file()
+            and candidate.suffix in {".py", ".sql", ".yaml", ".yml", ".sh", ".toml"}
+        )
+    return sorted(files)
+
+
+def test_public_runtime_contains_only_data_engineering_scope() -> None:
+    violations: list[str] = []
+    for path in _public_runtime_files():
+        content = path.read_text(encoding="utf-8")
+        for label, pattern in OUT_OF_SCOPE_PATTERNS.items():
+            if pattern.search(content):
+                violations.append(f"{path.relative_to(ROOT)}: {label}")
+
+    assert not violations, "out-of-scope public runtime content:\n" + "\n".join(violations)
+
 
 def _stream_table_columns() -> dict[str, set[str]]:
     sql = (ROOT / "database/init.sql").read_text(encoding="utf-8")
