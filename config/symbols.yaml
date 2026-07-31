@@ -9,14 +9,6 @@ symbols:
         - DOGEUSDT
         - TRXUSDT
         - XRPUSDT
-      trade:
-        - BTCUSDT
-        - ETHUSDT
-        - SOLUSDT
-      backtest:
-        - BTCUSDT
-        - ETHUSDT
-        - SOLUSDT
     spot:
       quote_currency: USDT
       collect:

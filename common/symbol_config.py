@@ -165,26 +165,6 @@ def validate_symbol_universe(config: dict[str, Any]) -> None:
             collect = set(_normalize_symbols(market_cfg.get("collect"), label=f"{exchange}.{market}.collect"))
             all_collect_symbols.update(collect)
 
-            if "trade" in market_cfg:
-                trade = set(_normalize_symbols(market_cfg.get("trade"), label=f"{exchange}.{market}.trade"))
-                if not trade <= collect:
-                    missing = sorted(trade - collect)
-                    raise SymbolConfigError(f"{exchange}.{market}.trade must be a subset of collect: {missing}")
-
-            if "backtest" in market_cfg:
-                backtest = set(
-                    _normalize_symbols(
-                        market_cfg.get("backtest"),
-                        label=f"{exchange}.{market}.backtest",
-                    )
-                )
-                allowed = collect | core_symbols
-                if not backtest <= allowed:
-                    missing = sorted(backtest - allowed)
-                    raise SymbolConfigError(
-                        f"{exchange}.{market}.backtest must be within collect or core_symbols: {missing}"
-                    )
-
     if not core_symbols <= all_collect_symbols:
         missing = sorted(core_symbols - all_collect_symbols)
         raise SymbolConfigError(f"core_symbols must be collected somewhere: {missing}")
@@ -205,18 +185,6 @@ def get_collect_symbols(exchange: str = "binance", market: str = "futures") -> l
     config = load_symbol_config()
     market_cfg = _market_config(config, exchange, market)
     return _normalize_symbols(market_cfg.get("collect"), label=f"{exchange}.{market}.collect")
-
-
-def get_trade_symbols(exchange: str = "binance", market: str = "futures") -> list[str]:
-    config = load_symbol_config()
-    market_cfg = _market_config(config, exchange, market)
-    return _normalize_symbols(market_cfg.get("trade"), label=f"{exchange}.{market}.trade")
-
-
-def get_backtest_symbols(exchange: str = "binance", market: str = "futures") -> list[str]:
-    config = load_symbol_config()
-    market_cfg = _market_config(config, exchange, market)
-    return _normalize_symbols(market_cfg.get("backtest"), label=f"{exchange}.{market}.backtest")
 
 
 def get_display_symbols() -> list[str]:
@@ -245,10 +213,9 @@ def validate_known_symbol(symbol: str, allowed_symbols: list[str] | None = None)
                 for market_cfg in exchange_cfg.values():
                     if not isinstance(market_cfg, dict):
                         continue
-                    for key in ("collect", "trade", "backtest"):
-                        raw_symbols = market_cfg.get(key)
-                        if raw_symbols is not None:
-                            allowed.update(_normalize_symbols(raw_symbols, label=f"symbols.{key}"))
+                    raw_symbols = market_cfg.get("collect")
+                    if raw_symbols is not None:
+                        allowed.update(_normalize_symbols(raw_symbols, label="symbols.collect"))
     else:
         allowed = set(_normalize_symbols(allowed_symbols, label="allowed_symbols"))
 
